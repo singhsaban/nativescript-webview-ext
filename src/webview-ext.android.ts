@@ -429,6 +429,30 @@ function initializeWebViewClient(): void {
 
             return false;
         }
+
+        public onShowFileChooser(view: android.webkit.WebView, callback: android.webkit.ValueCallback<native.Array<android.net.Uri> | null>, params: android.webkit.WebChromeClient.FileChooserParams): boolean {
+            const owner = this.owner.get();
+            if (!owner) {
+                return false;
+            }
+
+            let gotResponse = false;
+            return owner._showFileChooser((filePaths: Array<String>) => {
+                if (!gotResponse) {
+                    if (filePaths && filePaths.length > 0) {
+                        let uriArray = Array.create(android.net.Uri, filePaths.length);
+                        filePaths.forEach((filePath: String, index: any) => {
+                            uriArray[index] = android.net.Uri.parse('file://' + filePath);
+                        });
+                        callback.onReceiveValue(uriArray);
+                    }
+                    else {
+                        callback.onReceiveValue(null);
+                    }
+                }
+                gotResponse = true;
+            });
+        }
     }
 
     WebChromeViewExtClient = WebChromeViewExtClientImpl;

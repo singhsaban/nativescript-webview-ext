@@ -184,6 +184,7 @@ export enum EventNames {
     ShouldOverrideUrlLoading = "shouldOverrideUrlLoading",
     TitleChanged = "titleChange",
     WebAlert = "webAlert",
+    ShowFileChooser = "showFileChooser",
     WebConfirm = "webConfirm",
     WebConsole = "webConsole",
     EnterFullscreen = "enterFullscreen",
@@ -295,6 +296,13 @@ export interface WebConsoleEventData extends WebViewExtEventData {
     };
 }
 
+export interface ShowFileChooserEventData extends EventData {
+    object: WebViewExtBase;
+    eventName: EventNames.ShowFileChooser;
+    url: string;
+    callback: (filePaths: Array<String>) => void;
+}
+
 /**
  * Event data containing information for the loading events of a WebView.
  */
@@ -394,6 +402,11 @@ export class WebViewExtBase extends ContainerView {
     public static get webConsoleEvent() {
         return EventNames.WebConsole;
     }
+
+    public static get showFileChooserEvent() {
+        return EventNames.ShowFileChooser;
+    }
+
     public static get enterFullscreenEvent() {
         return EventNames.EnterFullscreen;
     }
@@ -717,6 +730,22 @@ export class WebViewExtBase extends ContainerView {
 
         this.notify(args);
 
+        return true;
+    }
+
+    public _showFileChooser(callback: (filePaths: Array<String>) => void ) {
+        if (!this.hasListeners(WebViewExtBase.showFileChooserEvent)) {
+            return false;
+        }
+
+        const args = {
+            eventName: WebViewExtBase.showFileChooserEvent,
+            object: this,
+            url: this.src,
+            callback
+        } as ShowFileChooserEventData;
+
+        this.notify(args);
         return true;
     }
 
@@ -1466,6 +1495,14 @@ export interface WebViewExtBase {
      */
     on(event: EventNames.WebAlert, callback: (args: WebAlertEventData) => void, thisArg?: any);
     once(event: EventNames.WebAlert, callback: (args: WebAlertEventData) => void, thisArg?: any);
+
+    /**
+     * Override showFileChooser to replace them.
+     * Call args.callback() to send file selection.
+     * NOTE: Only for Android. iOS supports this by default.
+     */
+    on(event: EventNames.ShowFileChooser, callback: (args: ShowFileChooserEventData) => void, thisArg?: any);
+    once(event: EventNames.ShowFileChooser, callback: (args: ShowFileChooserEventData) => void, thisArg?: any);
 
     /**
      * Override web confirm dialogs to replace them.
